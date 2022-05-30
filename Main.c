@@ -11,12 +11,12 @@
 
 //######################################################################################################################################################
 
-void *reader();   // Odczyt /proc/stat
-void *analyser(); // Analiza odczytu
-void *printer();  // Sformatowany wydruk
-void init();      // Test działania algorytmu (krok po kroku odpala komendy)
-void *watchdog(); // Licznik czasu przekroczenia
-void *logger();
+void *reader();
+void *analyser();
+void *printer();
+void init();
+void *watchdog();
+//void *logger();
 void sigcatch(int signum);
 
 //######################################################################################################################################################
@@ -26,15 +26,8 @@ void sigcatch(int signum);
 #define IDLE_NUM 3
 #define MAX_MSG_LEN 100
 #define SEM_NUM 3
-#define THREADS_NUM 5
+#define THREADS_NUM 4
 #define MUTEX_NUM 5
-
-#define READER_DONE "Reader have done work"
-#define ANALYSER_DONE "Analyser have done work"
-#define PRINTER_DONE "Printer have done work"
-#define ERROR_MSG "ERROR"
-
-#define LOG (sem_post(&semaphore[3]))
 
 //######################################################################################################################################################
 
@@ -43,12 +36,11 @@ double prevsum[PROC_DATA] = {0};
 double previdle[PROC_DATA] = {0};
 double *usage;
 double totalusage; // Przechowywanie danych o zużyciu procesora
-char *dump;
 pthread_mutex_t mutex[MUTEX_NUM] = {PTHREAD_MUTEX_INITIALIZER}; // mutex blokujący wyścigi
 sem_t semaphore[SEM_NUM];                                       // semafory
 pthread_t P[THREADS_NUM];                                       // inicjowanie wątków
-volatile clock_t start;                                                  // Zmienna odliczająca ilość tick
-double cpu_time_used = 0;                                // Zmienna globalna do kalkulacji czasu
+volatile clock_t start;                                         // Zmienna odliczająca ilość tick
+double cpu_time_used = 0;                                       // Zmienna globalna do kalkulacji czasu
 volatile sig_atomic_t sig = 0;
 
 //######################################################################################################################################################
@@ -56,14 +48,12 @@ volatile sig_atomic_t sig = 0;
 int main()
 {
 
-    // Obsługa SIGTERM
+    // SIGTERM
 
     struct sigaction action;
     memset(&action, 0, sizeof(struct sigaction));
     action.sa_handler = sigcatch;
     sigaction(SIGTERM, &action, NULL);
-
-    // Inicjowanie tablic
 
     // Declare usage array
     usage = (double *)calloc(PROC_DATA, sizeof(double));
@@ -72,7 +62,7 @@ int main()
         perror("Failed to allocate error for usage array");
         exit(1);
     }
-    // Declare CPU_Measures array [][]
+    // Declare CPU_Measures
     CPU_Measures = (double **)calloc(PROC_DATA, sizeof(double *));
     if (CPU_Measures == NULL)
     {
@@ -93,33 +83,36 @@ int main()
     {
         sem_init(&semaphore[i], 0, 0);
     }
-    //if (pthread_create(&P[3], NULL, watchdog, NULL) != 0)
-    //{
-     //   perror("Failer to create watchdog thread");
-    //}
+    if (pthread_create(&P[3], NULL, watchdog, NULL) != 0)
+    {
+        perror("Failer to create watchdog thread");
+        exit(1);
+    }
     if (pthread_create(&P[0], NULL, reader, NULL) != 0)
     {
         perror("Failer to create reader thread");
+        exit(1);
     }
     if (pthread_create(&P[1], NULL, analyser, NULL) != 0)
     {
         perror("Failer to create analyser thread");
+        exit(1);
     }
     if (pthread_create(&P[2], NULL, printer, NULL) != 0)
     {
         perror("Failer to create printer thread");
+        exit(1);
     }
-    start = clock();    // Start counting time in watchdog
-    sem_post(&semaphore[0]);
-    sem_post(&semaphore[3]);
+    start = clock();                        // Start counting time in watchdog
+    sem_post(&semaphore[0]);                //starting signal
 
     for (int i = 0; i < THREADS_NUM; i++)
     {
-        pthread_join(P[i], NULL);// Free threads from memory
+        pthread_join(P[i], NULL);           // Free threads from memory
     }
-    for (int i = 0; i < 4; i++)
+    for (int i = 0; i < SEM_NUM; i++)
     {
-        sem_destroy(&semaphore[i]); // Free semaphores from memory
+        sem_destroy(&semaphore[i]);         // Free semaphores from memory
     }
     free(CPU_Measures);
     free(usage);
@@ -164,25 +157,25 @@ void *analyser()
     {
         sem_wait(&semaphore[1]);
         pthread_mutex_lock(&mutex[1]);
-        start = clock(); // Czyszczenie konsoli
+        start = clock();
         for (int k = 0; k < CPU_NUM; k++)
         {
             sum = 0;
             idle = CPU_Measures[IDLE_NUM][k];
             for (int j = 0; j < PROC_DATA; j++)
-            { // Odczyt wartość po wartości
+            { 
                 sum += CPU_Measures[j][k];
             }
-            usage[k] = (1 - (idle - previdle[k]) / (sum - prevsum[k])) * 100; // zużycie dla danego rdzenia
+            usage[k] = (1 - (idle - previdle[k]) / (sum - prevsum[k])) * 100; 
             prevsum[k] = sum;
             previdle[k] = idle;
         }
         totalusage = 0;
         for (int j = 0; j < CPU_NUM; j++)
         {
-            totalusage += (double)usage[j]; // średnie zużycie jako średnia arytmetyczna
+            totalusage += (double)usage[j]; 
         }
-        totalusage /=  (double)CPU_NUM;
+        totalusage /= (double)CPU_NUM;
         pthread_mutex_unlock(&mutex[1]);
         sem_post(&semaphore[2]);
     }
@@ -198,11 +191,12 @@ void *printer()
         sem_wait(&semaphore[2]);
         pthread_mutex_lock(&mutex[2]);
         start = clock();
-        system("clear"); // Czyszczenie konsoli
-        printf("Średnie zużycie \t %.2lf\t%%\n", totalusage);
-        for (int u = 0; u < get_nprocs_conf(); u++)
+        system("clear");
+        puts("\n");
+        printf("\t\tŚrednie zużycie \t %.2lf\t%%\n", totalusage);
+        for (int u = 0; u < CPU_NUM; u++)
         {
-            printf("Zużycie rdzenia %d \t %.2lf\t%%\n", u + 1, usage[u]); // Sformatowany wydruk zużycia procesora i jego rdzeni
+            printf("\t\tZużycie rdzenia %d \t %.2lf\t%%\n", u + 1, usage[u]);
         }
         pthread_mutex_unlock(&mutex[2]);
         sem_post(&semaphore[0]);
@@ -216,17 +210,39 @@ void *watchdog()
 {
     while (cpu_time_used < 2 || sig != 1)
     {
+        sleep(0.1);
         cpu_time_used = ((double)(clock() - start)) / CLOCKS_PER_SEC;
     }
-    pthread_cancel(P[0]); // Awaryjne wyłączanie wątków
+    perror("ERROR NO RESPONSE FROM THREAD");
+    pthread_cancel(P[0]);
     pthread_cancel(P[1]);
     pthread_cancel(P[2]);
     pthread_cancel(P[3]);
-    pthread_cancel(P[4]);
+    for (int i = 0; i < SEM_NUM; i++)
+    {
+        sem_destroy(&semaphore[i]);
+    }
+    free(CPU_Measures);
+    free(usage);
     return EXIT_SUCCESS;
 }
 
 //######################################################################################################################################################
+
+/*
+void *logger()
+{
+    FILE *log = fopen("debuglogger.log", "w");
+    while (cpu_time_used < 2 || sig != 1)
+    {
+        sem_wait(&semaphore[3]);
+        pthread_mutex_lock(&mutex[3]);
+        fprintf(log, "%s", logmsg);
+        pthread_mutex_unlock(&mutex[3]);
+    }
+}
+Zużycie procesora 100%, gdzieś jest bug
+*/
 
 //######################################################################################################################################################
 
