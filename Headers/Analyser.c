@@ -3,8 +3,7 @@
 void *analyser()
 {
     double idle, sum;
-    while (allow != false)
-    {
+    do{
         sem_wait(&semaphore[1]);
         pthread_mutex_lock(&mutex[1]);
         sendlog(ANALYSER_RECIVE);
@@ -30,6 +29,6 @@ void *analyser()
         pthread_mutex_unlock(&mutex[1]);
         sendlog(ANALYSER_SEND);
         sem_post(&semaphore[2]);
-    }
+    }while (allow != false);
     return EXIT_SUCCESS;
 }

@@ -2,13 +2,12 @@
 
 void *printer()
 {
-    while (allow != false)
-    {
+    do{
         sem_wait(&semaphore[2]);
         pthread_mutex_lock(&mutex[2]);
         sendlog(PRINTER_RECIVE);
         start = clock();
-        system("clear");
+        CONSOLE_CLEAR;
         puts("\n");
         printf("\t\tŚrednie zużycie \t %.2lf\t%%\n", totalusage);
         for (int u = 0; u < CPU_NUM; u++)
@@ -18,6 +17,6 @@ void *printer()
         pthread_mutex_unlock(&mutex[2]);
         sendlog(PRINTER_SEND);
         sem_post(&semaphore[0]);
-    }
+    }while (allow != false);
     return EXIT_SUCCESS;
 }

@@ -1,6 +1,6 @@
 #include "Header.h"
 
-void sigcatch(int signum)
+void sigcatch()
 {
     sendlog(SIGTERM_ERROR);
     allow = false;
