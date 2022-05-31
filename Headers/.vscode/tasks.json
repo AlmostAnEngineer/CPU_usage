@@ -2,15 +2,34 @@
     "tasks": [
         {
             "type": "cppbuild",
-            "label": "C/C++: gcc.exe kompiluj aktywny plik",
-            "command": "C:\\MinGW\\bin\\gcc.exe",
+            "label": "C/C++: gcc kompiluj aktywny plik",
+            "command": "/usr/bin/gcc",
             "args": [
                 "-fdiagnostics-color=always",
                 "-g",
                 "${file}",
-                "pthread",
                 "-o",
-                "${fileDirname}\\${fileBasenameNoExtension}.exe"
+                "${fileDirname}/${fileBasenameNoExtension}"
+            ],
+            "options": {
+                "cwd": "${fileDirname}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": "build",
+            "detail": "Zadanie wygenerowane przez debuger."
+        },
+        {
+            "type": "cppbuild",
+            "label": "C/C++: gcc-9 kompiluj aktywny plik",
+            "command": "/usr/bin/gcc-9",
+            "args": [
+                "-fdiagnostics-color=always",
+                "-g",
+                "${file}",
+                "-o",
+                "${fileDirname}/${fileBasenameNoExtension}"
             ],
             "options": {
                 "cwd": "${fileDirname}"

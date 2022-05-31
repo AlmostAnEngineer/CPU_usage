@@ -3,10 +3,11 @@
 void *analyser()
 {
     double idle, sum;
-    while (cpu_time_used < 2 || sig != 1)
+    while (allow != false)
     {
         sem_wait(&semaphore[1]);
         pthread_mutex_lock(&mutex[1]);
+        sendlog(ANALYSER_RECIVE);
         start = clock();
         for (int k = 0; k < CPU_NUM; k++)
         {
@@ -27,6 +28,7 @@ void *analyser()
         }
         totalusage /= (double)CPU_NUM;
         pthread_mutex_unlock(&mutex[1]);
+        sendlog(ANALYSER_SEND);
         sem_post(&semaphore[2]);
     }
     return EXIT_SUCCESS;

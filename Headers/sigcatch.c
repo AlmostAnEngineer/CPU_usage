@@ -2,5 +2,6 @@
 
 void sigcatch(int signum)
 {
-    sig = 1;
+    sendlog(SIGTERM_ERROR);
+    allow = false;
 }

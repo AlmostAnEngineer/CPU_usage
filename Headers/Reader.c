@@ -5,11 +5,12 @@ void *reader()
 {
     char *buffer = NULL;
     size_t len = 256;
-    while (cpu_time_used < 2 || sig != 1)
+    while (allow != false)
     {
 
         sem_wait(&semaphore[0]);
         pthread_mutex_lock(&mutex[0]);
+        sendlog(READER_RECIVE);
         sleep(1);
         start = clock();
         FILE *read = fopen("/proc/stat", "r");
@@ -27,7 +28,9 @@ void *reader()
         }
         fclose(read);
         pthread_mutex_unlock(&mutex[0]);
+        sendlog(READER_SEND);
         sem_post(&semaphore[1]);
     }
+    
     return EXIT_SUCCESS;
 }

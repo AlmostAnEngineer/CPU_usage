@@ -5,28 +5,27 @@
 #include "Reader.c"
 #include "Watchdog.c"
 #include "sigcatch.c"
+#include "Logger.c"
 
 int main()
 {
-    // SIGTERM
-
+    system("clear");
+    CONSOLE(INIT);
     struct sigaction action;
     memset(&action, 0, sizeof(struct sigaction));
     action.sa_handler = sigcatch;
-    sigaction(SIGTERM, &action, NULL);
-
-    // Declare usage array
+    sigaction(SIGINT, &action, NULL);
+    CONSOLE(INIT_SIGTERM);
     usage = (double *)calloc(PROC_DATA, sizeof(double));
     if (usage == NULL)
     {
-        perror("Failed to allocate error for usage array");
+        perror(FAIL_MEM);
         exit(1);
     }
-    // Declare CPU_Measures
     CPU_Measures = (double **)calloc(PROC_DATA, sizeof(double *));
     if (CPU_Measures == NULL)
     {
-        perror("Failed to allocate error for CPU_Measures array");
+        perror(FAIL_MEM);
         exit(1);
     }
     for (int i = 0; i < PROC_DATA; ++i)
@@ -34,47 +33,66 @@ int main()
         CPU_Measures[i] = (double *)calloc(CPU_NUM, sizeof(double));
         if (CPU_Measures[i] == NULL)
         {
-            perror("Failed to allocate error for array");
+            perror(FAIL_MEM);
             exit(1);
         }
     }
-    // Declare semaphores
+    CONSOLE(INIT_MEM);
     for (int i = 0; i < SEM_NUM; i++)
     {
         sem_init(&semaphore[i], 0, 0);
     }
+    CONSOLE(INIT_SEM);
+     for (int i = 0; i < MUTEX_NUM; i++)
+    {
+        pthread_mutex_init(&mutex[i], NULL);
+    }
+    CONSOLE(INIT_MUTEX);
     if (pthread_create(&P[3], NULL, watchdog, NULL) != 0)
     {
-        perror("Failer to create watchdog thread");
+        perror(FAIL_THREAD);
         exit(1);
     }
     if (pthread_create(&P[0], NULL, reader, NULL) != 0)
     {
-        perror("Failer to create reader thread");
+        perror(FAIL_THREAD);
         exit(1);
     }
     if (pthread_create(&P[1], NULL, analyser, NULL) != 0)
     {
-        perror("Failer to create analyser thread");
+        perror(FAIL_THREAD);
         exit(1);
     }
     if (pthread_create(&P[2], NULL, printer, NULL) != 0)
     {
-        perror("Failer to create printer thread");
+        perror(FAIL_THREAD);
         exit(1);
     }
+    CONSOLE(INIT_THR);
+    initlogger();
+    sendlog(STARTMSG);
     start = clock();         // Start counting time in watchdog
-    sem_post(&semaphore[0]); // starting signal
+    sem_post(&semaphore[0]); // starting signal   
 
-    for (int i = 0; i < THREADS_NUM; i++)
+    for (int i = 0; i < THR_CAN_NUM; i++)
     {
         pthread_join(P[i], NULL); // Free threads from memory
     }
+    sendlog(END_THR);
     for (int i = 0; i < SEM_NUM; i++)
     {
         sem_destroy(&semaphore[i]); // Free semaphores from memory
     }
+    sendlog(END_SEM);
+    for (int i = 0; i < MUTEX_NUM; i++)
+    {
+        pthread_mutex_destroy(&mutex[i]); // Free semaphores from memory
+    }
+    sendlog(MUT_END);
+    free(*CPU_Measures);
     free(CPU_Measures);
     free(usage);
+    free(logmsg);
+    sendlog(END_MEM);
 }
 

@@ -2,10 +2,11 @@
 
 void *printer()
 {
-    while (cpu_time_used < 2 || sig != 1)
+    while (allow != false)
     {
         sem_wait(&semaphore[2]);
         pthread_mutex_lock(&mutex[2]);
+        sendlog(PRINTER_RECIVE);
         start = clock();
         system("clear");
         puts("\n");
@@ -15,6 +16,7 @@ void *printer()
             printf("\t\tZużycie rdzenia %d \t %.2lf\t%%\n", u + 1, usage[u]);
         }
         pthread_mutex_unlock(&mutex[2]);
+        sendlog(PRINTER_SEND);
         sem_post(&semaphore[0]);
     }
     return EXIT_SUCCESS;
