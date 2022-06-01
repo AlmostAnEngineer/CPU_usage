@@ -3,7 +3,6 @@
 void initlogger()
 {
     time_t t = time(NULL);
-    logmsg = malloc(sizeof(char)*MAX_MSG_LEN);
     FILE *logfile = fopen("debuglog.log","w");
     fprintf(logfile,"\t\t\t\t CPU_USAGE_TRACKER_LOGGER\nCreated: \t\t%s\n",ctime(&t));
     fclose(logfile);

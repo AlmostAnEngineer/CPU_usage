@@ -4,10 +4,8 @@ void *reader()
 {
     char *buffer = NULL;
     size_t len = 256;
-    while (allow != false)
         do
         {
-
             sem_wait(&semaphore[0]);
             pthread_mutex_lock(&mutex[0]);
             sendlog(READER_RECIVE);
