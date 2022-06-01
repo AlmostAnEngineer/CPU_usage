@@ -9,14 +9,14 @@
 
 int main()
 {
-    system("clear");
+    CONSOLE_CLEAR;
     CONSOLE(INIT);
     struct sigaction action;
     memset(&action, 0, sizeof(struct sigaction));
     action.sa_handler = sigcatch;
     sigaction(SIGINT, &action, NULL);
     CONSOLE(INIT_SIGTERM);
-    logmsg = malloc(sizeof(char)*MAX_MSG_LEN);
+    logmsg = (char *)malloc(sizeof(char)*MAX_MSG_LEN);
     if (logmsg == NULL)
     {
         perror(FAIL_MEM);
@@ -77,28 +77,30 @@ int main()
     CONSOLE(INIT_THR);
     initlogger();
     sendlog(STARTMSG);
-    start = clock();         // Start counting time in watchdog
-    sem_post(&semaphore[0]); // starting signal   
+    start = clock();         
+    sem_post(&semaphore[0]); 
 
-    for (int i = 0; i < THR_CAN_NUM; i++)
+    for (int i = 0; i < THREADS_NUM; i++)
     {
-        pthread_join(P[i], NULL); // Free threads from memory
+        pthread_join(P[i], NULL); 
     }
     sendlog(END_THR);
     for (int i = 0; i < SEM_NUM; i++)
     {
-        sem_destroy(&semaphore[i]); // Free semaphores from memory
+        sem_destroy(&semaphore[i]);
     }
    sendlog(END_SEM);
     for (int i = 0; i < MUTEX_NUM; i++)
     {
-        pthread_mutex_destroy(&mutex[i]); // Free semaphores from memory
+        pthread_mutex_destroy(&mutex[i]);
     }
     sendlog(MUT_END);
-    free(*CPU_Measures);
+    for (int i = 0; i < PROC_DATA; ++i)
+    {
+        free(CPU_Measures[i]);
+    }
     free(CPU_Measures);
     free(usage);
     free(logmsg);
-    sendlog(END_MEM);
 }
 

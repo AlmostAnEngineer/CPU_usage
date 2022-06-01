@@ -2,7 +2,8 @@
 
 void *printer()
 {
-    do{
+    do
+    {
         sem_wait(&semaphore[2]);
         pthread_mutex_lock(&mutex[2]);
         sendlog(PRINTER_RECIVE);
@@ -17,6 +18,6 @@ void *printer()
         pthread_mutex_unlock(&mutex[2]);
         sendlog(PRINTER_SEND);
         sem_post(&semaphore[0]);
-    }while (allow != false);
+    } while (allow != false);
     return EXIT_SUCCESS;
 }
