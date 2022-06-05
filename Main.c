@@ -14,7 +14,7 @@ int main()
     struct sigaction action;
     memset(&action, 0, sizeof(struct sigaction));
     action.sa_handler = sigcatch;
-    sigaction(SIGTERM, &action, NULL);
+    sigaction(SIGINT, &action, NULL);
     CONSOLE(INIT_SIGTERM);
     logmsg = (char *)malloc(sizeof(char)*MAX_MSG_LEN);
     if (logmsg == NULL)
@@ -80,22 +80,19 @@ int main()
     start = clock();         
     sem_post(&semaphore[0]); 
 
-    for (int i = 0; i < THREADS_NUM; i++)
+    for (int i = 0; i < THR_CAN_NUM; i++)
     {
-        pthread_join(P[i], NULL); 
+        pthread_join(P[i],NULL); 
     }
-    sendlog(END_THR);
     for (int i = 0; i < SEM_NUM; i++)
     {
         sem_destroy(&semaphore[i]);
     }
-   sendlog(END_SEM);
     for (int i = 0; i < MUTEX_NUM; i++)
     {
         pthread_mutex_destroy(&mutex[i]);
     }
-    sendlog(MUT_END);
-    for (int i = 0; i < PROC_DATA; ++i)
+    for (int i = 0; i < PROC_DATA; i++)
     {
         free(CPU_Measures[i]);
     }
