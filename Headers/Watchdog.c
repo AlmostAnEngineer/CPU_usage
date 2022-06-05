@@ -34,5 +34,5 @@ void *watchdog()
 
     JUMP:
 
-    exit(1);
+    return EXIT_SUCCESS;
 }
