@@ -14,7 +14,7 @@ int main()
     struct sigaction action;
     memset(&action, 0, sizeof(struct sigaction));
     action.sa_handler = sigcatch;
-    sigaction(SIGINT, &action, NULL);
+    sigaction(SIGTERM, &action, NULL);
     CONSOLE(INIT_SIGTERM);
     logmsg = (char *)malloc(sizeof(char)*MAX_MSG_LEN);
     if (logmsg == NULL)
